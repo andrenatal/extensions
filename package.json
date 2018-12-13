@@ -1,0 +1,28 @@
+{
+  "name": "extensions",
+  "version": "1.0.0",
+  "description": "FakerFact Extensions",
+  "scripts": {
+    "start": "web-ext run --verbose",
+    "prebuild:ext": "rm -rf ext/.DS_Store && rm -rf dist/ext && rm -rf build/firefox.zip && mkdir -p build && mkdir -p dist/ext",
+    "build:ext": "node build ext",
+    "postbuild:ext": "zip -r -j build/firefox.zip dist/ext",
+    "prebuild:chrome": "rm -rf ext/.DS_Store && rm -rf dist/ext && rm -rf build/chrome.zip && mkdir -p build && mkdir -p dist/ext",
+    "build:chrome": "node build chrome",
+    "postbuild:chrome": "zip -r -j build/chrome.zip dist/chrome"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fakerfact/extensions.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/fakerfact/extensions/issues"
+  },
+  "homepage": "https://github.com/fakerfact/extensions#readme",
+  "devDependencies": {
+    "web-ext": "^2.9.2"
+  }
+}
