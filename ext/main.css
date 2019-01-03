@@ -1,0 +1,27 @@
+.ff-icon {
+    background-image: url('fakerfact-96.png');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+    border: none;
+    box-shadow: transparent;
+    box-sizing: border-box;
+    height: 16px;
+    position: absolute;
+    right: -50px;
+    top: 3px;
+    transition: background-color 50ms, opacity 50ms, box-shadow 100ms;
+    width: 16px;
+    z-index: 9999999;
+}
+
+
+.iframe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 560px;
+    height: 560px;
+    z-index:99;
+    display: none;
+}
