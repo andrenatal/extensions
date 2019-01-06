@@ -31,8 +31,8 @@ npm run build:chrome <api url> <website url>
 For example:
 
 ```
-npm run build:chrome https://example.com/api https://www.fakerfact.org
 npm run build:ext https://example.com/api https://www.fakerfact.org
+npm run build:chrome https://example.com/api https://www.fakerfact.org
 ```
 
 The built extensions will be in `/build`

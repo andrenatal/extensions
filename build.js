@@ -5,12 +5,12 @@ const cwd =  process.cwd()
 const folder = process.argv[2]
 const apiURL = process.argv[3]
 const websiteURL = process.argv[4]
-const basePath = path.join(cwd, folder)
+const basePath = path.join(cwd, 'src')
 const distPath = path.join(cwd, 'dist', folder)
 
 console.log(`Building ${folder} with API URL ${apiURL} and Website URL ${websiteURL}`)
 
-const files = fs.readdirSync(path.join(cwd, folder))
+const files = fs.readdirSync(path.join(cwd, 'src'))
 
 const substitutions = {
   'http://localhost:5000': apiURL,
@@ -19,6 +19,8 @@ const substitutions = {
 
 files.forEach(file => {
   const filePath = path.join(basePath, file)
+  if (fs.lstatSync(filePath).isDirectory()) return
+
   const destinationPath = path.join(distPath, file)
 
   if (file.endsWith('.js') || file.endsWith('.json')) {

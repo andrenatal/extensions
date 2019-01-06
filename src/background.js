@@ -1,14 +1,13 @@
-// --- BEGIN EXTENSION-SPECIFIC CONFIG ---
-const SRC = "ffde" // firefox desktop extension
+const isChrome = typeof browser === 'undefined'
+const SRC = isChrome ? "cde" : "ffde"
 const USER_AGENT = 'FakerFact/Firefox Plugin'
-const TABS = browser.tabs
-const RUNTIME = browser.runtime
-const CONTEXT_MENUS = browser.contextMenus
-// --- END EXTENSION-SPECIFIC CONFIG ---
+const tabs = isChrome ? chrome.tabs : browser.tabs
+const runtime = isChrome ? chrome.runtime : browser.runtime
+const contextMenus = isChrome ? chrome.contextMenus : browser.contextMenus
 
 // This creates the "FakerFact Check Menu Item"
-RUNTIME.onInstalled.addListener(function () {
-  CONTEXT_MENUS.create({
+runtime.onInstalled.addListener(function () {
+  contextMenus.create({
     title: 'FakerFact Check',
     type: 'normal',
     id: 'FakerFactCheck',
@@ -24,7 +23,7 @@ RUNTIME.onInstalled.addListener(function () {
 //  - post it to the server, using the prediction link
 //  - get the response
 //  - open the success page /walt-says/:id in a new tab OR open the error page in a new tab /error
-CONTEXT_MENUS.onClicked.addListener(function (itemData) {
+contextMenus.onClicked.addListener(function (itemData) {
   if (itemData.menuItemId === 'FakerFactCheck') {
     createTab('/thinking')
       .then(fakerFactTab => {
@@ -37,25 +36,25 @@ CONTEXT_MENUS.onClicked.addListener(function (itemData) {
 
 // This is what runs when the popup sends a message
 // The flow is:
-//  - send a message to load /ext/thinking
+//  - send a message to load /src/thinking
 //  - get links and find the prediction link
 //  - get the HTML from the page
 //  - post it to the server, using the prediction link
 //  - get the response
-//  - send a message with /ext/walt-says/:id  OR  /ext/error
-RUNTIME.onMessage.addListener((message, sender, sendResponse) => {
+//  - send a message with /src/walt-says/:id  OR  /src/error
+runtime.onMessage.addListener((message, sender, sendResponse) => {
   sendResponse({ type: "THINKING", url: `${ WEB_HOST }/ext/thinking` })
   getCurrentTab()
     .then(currentTab => {
       return getHTML(currentTab)
         .then(html => makePrediction(currentTab.url, html))
-        .then(prediction => RUNTIME.sendMessage({
+        .then(prediction => runtime.sendMessage({
           type: "PREDICTION_SUCCESS",
           url: `${ WEB_HOST }/ext/walt-says/${ prediction.id }`
         }))
         .catch(e => {
           const url = `${ WEB_HOST }/ext${ getErrorPath(currentTab.url, e) }`
-          RUNTIME.sendMessage({ type: "PREDICTION_ERROR", url })
+          runtime.sendMessage({ type: "PREDICTION_ERROR", url })
         })
     })
   return true
@@ -104,26 +103,40 @@ function log () {
 }
 
 function getCurrentTab () {
-  return browser.tabs.query({ active: true, windowId: browser.windows.WINDOW_ID_CURRENT })
-    .then(tabs => browser.tabs.get(tabs[0].id))
+  if (isChrome) {
+    return new Promise(resolve => {
+      tabs.getSelected(null, function (currentTab) {
+        resolve(currentTab)
+      })
+    })
+  } else {
+    return tabs.query({ active: true, windowId: browser.windows.WINDOW_ID_CURRENT })
+      .then(tabs => tabs.get(tabs[0].id))
+  }
 }
 
 function createTab (path) {
   return new Promise(resolve => {
-    TABS.create({ url: `${ WEB_HOST }${ path }` }, tab => resolve(tab))
+    tabs.create({ url: `${ WEB_HOST }${ path }` }, tab => resolve(tab))
   })
 }
 
 function updateTab (tab, path) {
   return new Promise(resolve => {
-    TABS.update(tab.id, { url: `${ WEB_HOST }${ path }` }, _ => resolve(null))
+    tabs.update(tab.id, { url: `${ WEB_HOST }${ path }` }, _ => resolve(null))
   })
 }
 
 function getHTML (tab) {
-  return new Promise(resolve => {
-    TABS.sendMessage(tab.id, { action: 'GET_HTML' }, resolve)
-  })
+  if (isChrome) {
+    return new Promise(resolve => {
+      tabs.sendMessage(tab.id, { action: 'GET_HTML' }, {}, resolve)
+    })
+  } else {
+    return new Promise(resolve => {
+      tabs.sendMessage(tab.id, { action: 'GET_HTML' }, resolve)
+    })
+  }
 }
 
 // // --- FAKERFACT API ABSTRACTIONS ---
