@@ -36,6 +36,6 @@
     "activeTab",
     "contextMenus",
     "http://localhost:5000/",
-    "*://twitter.*/*"
+    "*://*.twitter.*/*"
   ]
 }
