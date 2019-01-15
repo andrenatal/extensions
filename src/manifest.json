@@ -37,8 +37,7 @@
     "contextMenus",
     "http://localhost:5000/",
     "http://localhost:3000/",
-    "http://*.twitter.com/",
-    "https://*.twitter.com/"
+    "<all_urls>"
   ],
   "web_accessible_resources": [
     "images/*"
