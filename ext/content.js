@@ -1,7 +1,7 @@
 const USER_AGENT = "FakerFact/Firefox Plugin";
 let ff_icon = null;
 const SRC = "ffde"; // firefox desktop extension
-const API_HOST = "https://api.fakerfact.org/"
+const API_HOST = "https://api.fakerfact.org"
 const WEB_HOST = "https://www.fakerfact.org"
 let ifrm = null;
 let last_fficon = null;
@@ -62,87 +62,43 @@ browser.runtime.onMessage.addListener(function (message, sender, sendResponse) {
       }
     }
 
-  on_scroll() {
-    ifrm.style.top = `${last_fficon.getBoundingClientRect().top}px`;
-  }
+    on_scroll() {
+      ifrm.style.top = `${last_fficon.getBoundingClientRect().top}px`;
+    }
 
-  on_ff_icon_click(event) {
-    last_fficon = event.target;
-    ifrm.setAttribute("src", `${WEB_HOST}/ext/thinking`);
-    var x = event.clientX;
-    var y = event.clientY;
-    let url = this.getAttribute("url_ff");
-    ifrm.style.top = `${y}px`;
-    ifrm.style.left = `${x}px`;
-    ifrm.style.display = "block";
-    ff_icon.doGetPage(url);
-  }
+    on_ff_icon_click(event) {
+      last_fficon = event.target;
+      ifrm.setAttribute("src", `${WEB_HOST}/ext/thinking`);
+      var x = event.clientX;
+      var y = event.clientY;
+      let url = this.getAttribute("url_ff");
+      ifrm.style.top = `${y}px`;
+      ifrm.style.left = `${x}px`;
+      ifrm.style.display = "block";
+      ff_icon.doGetPage(url);
+    }
 
-  doPost(url, data) {
-    return this.doFetch(url, "POST", JSON.stringify(data));
-  }
+    doGetPage(url) {
+      var data = `{"url": "${url}"}`;
 
-  doGet(url) {
-    return this.doFetch(url, "GET");
-  }
+      var xhr = new XMLHttpRequest();
+      xhr.withCredentials = true;
 
-  doGetPage(url) {
-    fetch(url, {
-      mode: "cors",
-      redirect: "follow",
-    }).then(response => {
-      return response.text();
-    })
-    .then(data => {
-      var regex = /<META http-equiv="refresh" content="0;URL=([^"]+)[^>]+>/;
-      var match = regex.exec(data);
-
-      if (match !== null) {
-        this.doGetPage(match[1]);
-      } else {
-        this.makePrediction(url, data).then(prediction => {
-          let url = `${ WEB_HOST }/ext/walt-says/${ prediction.id }`;
+      xhr.addEventListener("readystatechange", function () {
+        if (this.readyState === 4) {
+          let id = JSON.parse(this.responseText).id;
+          let url = `${WEB_HOST}/ext/walt-says/${id}`;
           ifrm.setAttribute("src", url);
-        });
-      }
-    })
-    .catch(error => {
-      console.log(error); // display this error in the iframe
-    });
-  }
-
-  doFetch(url, method, body) {
-    return fetch(url, {
-      method,
-      body,
-      credentials: "include",
-      headers: {
-        "user-agent": USER_AGENT,
-        "content-type": "application/json"
-      },
-      mode: "cors"
-    });
-  }
-
-  getLinks() {
-    return this.doGet(`${ API_HOST }/api`)
-      .then(response => {
-        if (!response.ok) throw new Error("Could not fetch links")
-        return response.json()
+        }
       });
-  }
 
-  makePrediction(url, html) {
-    return this.getLinks()
-      .then(links => this.doPost(links._links.predictions.href, { url, html, src: SRC }))
-      .then(response => {
-        return response.json()
-          .then(prediction => {
-            if (!response.ok) throw new Error(prediction.errors[0].message)
-            return prediction;
-          });
-      });
-  }
+      xhr.open("POST", `${API_HOST}/api/predictions`);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Accept", "application/json");
+      xhr.setRequestHeader("cache-control", "no-cache");
+
+      xhr.send(data);
+    }
 
   }
   ff_icon = new FFEmbeddedIcon();
